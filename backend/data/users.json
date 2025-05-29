@@ -1,0 +1,14 @@
+[
+    {
+        "id": "683350f42bcb4",
+        "email": "dev@nextstep.com",
+        "password": "$2y$10$cn1RoS9sz.81Z0eXIPVizuVRz4t4cXVp.PRTJQSXzJ7HMoxRV9v9W",
+        "role": "recruteur"
+    },
+    {
+        "id": "6833526cae6e6",
+        "email": "dev@nextstep.com",
+        "password": "$2y$10$ghgg5Gg0ehWcDsDsDgkr\/.zQ5OWbWSN0TNjmDFcsVInms7MZ6BY7m",
+        "role": "recruteur"
+    }
+]

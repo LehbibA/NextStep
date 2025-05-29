@@ -1,0 +1,20 @@
+[
+    {
+        "id": "68334562311a4",
+        "titre": "D\u00e9veloppeur React",
+        "description": "Entreprise en croissance cherche un d\u00e9veloppeur React exp\u00e9riment\u00e9.",
+        "lieu": "Montr\u00e9al",
+        "type": "temps plein",
+        "salaire": "75000",
+        "date_creation": "2025-05-25 18:29:22"
+    },
+    {
+        "id": "683345f80d02a",
+        "titre": "D\u00e9veloppeur React",
+        "description": "Entreprise en croissance cherche un d\u00e9veloppeur React exp\u00e9riment\u00e9.",
+        "lieu": "Montr\u00e9al",
+        "type": "temps plein",
+        "salaire": "75000",
+        "date_creation": "2025-05-25 18:31:52"
+    }
+]
