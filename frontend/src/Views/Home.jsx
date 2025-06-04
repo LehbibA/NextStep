@@ -34,7 +34,7 @@ const Home = () => {
 
         {/* ILLUSTRATION (image fictive en attendant) */}
         <div className="col-md-6 text-center">
-          <img src="/assets/Img_temp.png" alt="Illustration IA" className="img-fluid" />
+          <img src="/assets/home-side-bg.png" alt="Illustration IA" className="img-fluid" />
         </div>
       </section>
 
@@ -49,7 +49,7 @@ const Home = () => {
       </section>
 
       <section className="container py-5">
-  <h2 className="mb-4 fw-bold text-center">Most Popular Vacancies</h2>
+  <h2 className="mb-4 fw-bold text-center">Postes vacants les plus populaires</h2>
   <div className="row row-cols-1 row-cols-md-3 g-4">
     {[
       ['Développeur Logiciel', 320],
