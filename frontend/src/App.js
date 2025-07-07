@@ -3,6 +3,10 @@ import Home from './Views/Home';
 import Connexion from './Views/Connexion';
 import Inscription from './Views/Inscription';
 import MotDePasseOublie from './Views/MotDePasseOublie';
+import Offres from './Views/Offres';
+import OffresPost from './Views/OffresPost';
+import OffresGestion from './Views/OffresGestion';
+import UserProfile from './Views/UserProfile';
 
 function App() {
   return (
@@ -12,6 +16,10 @@ function App() {
         <Route path="/connexion" element={<Connexion />} />
         <Route path="/inscription" element={<Inscription />} />
         <Route path="/MotDePasseOublie" element={<MotDePasseOublie />} />
+        <Route path="/Offres" element={<Offres />} />
+        <Route path="/OffresPost" element={<OffresPost />} />
+        <Route path="/OffresGestion" element={<OffresGestion />} />
+        <Route path="/UserProfile" element={<UserProfile />} />
       </Routes>
     </Router>
   );
