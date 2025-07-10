@@ -12,6 +12,7 @@ switch ($uri) {
         (new HomeController())->index();
         break;
 
+    // ========== ROUTES AUTHENTIFICATION ==========
     case '/api/register':
         require_once 'controllers/AuthController.php';
         (new AuthController())->register();
@@ -22,6 +23,12 @@ switch ($uri) {
         (new AuthController())->login();
         break;
 
+    case '/api/profile':
+        require_once 'controllers/AuthController.php';
+        (new AuthController())->profile();
+        break;
+
+    // ========== ROUTES OFFRES D'EMPLOI ==========
     case '/api/offres':
         require_once 'controllers/OffreController.php';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -34,7 +41,7 @@ switch ($uri) {
         }
         break;
 
-    // ========== NOUVEAUX ENDPOINTS PROFIL ==========
+    // ========== ROUTES PROFIL UTILISATEUR ==========
     case '/api/user/profile':
         require_once 'controllers/UserController.php';
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -56,8 +63,49 @@ switch ($uri) {
             echo json_encode(['error' => 'Méthode non autorisée']);
         }
         break;
-    // ========== FIN ENDPOINTS PROFIL ==========
 
+    // ========== ROUTES CANDIDATURES ==========
+    case '/api/applications/apply':
+        require_once 'controllers/ApplicationController.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            (new ApplicationController())->apply();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Méthode non autorisée']);
+        }
+        break;
+
+    case '/api/applications/user':
+        require_once 'controllers/ApplicationController.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            (new ApplicationController())->getUserApplications();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Méthode non autorisée']);
+        }
+        break;
+
+    case '/api/applications/recruiter':
+        require_once 'controllers/ApplicationController.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            (new ApplicationController())->getRecruiterApplications();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Méthode non autorisée']);
+        }
+        break;
+
+    case '/api/applications/status':
+        require_once 'controllers/ApplicationController.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+            (new ApplicationController())->updateApplicationStatus();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Méthode non autorisée']);
+        }
+        break;
+
+    // ========== ROUTES PROTÉGÉES (TESTS) ==========
     case '/api/protected':
         require_once 'controllers/HomeController.php';
         require_once 'middleware/AuthMiddleware.php';
@@ -89,13 +137,22 @@ switch ($uri) {
         (new ProtectedController())->accessiblePourTous();
         break;
 
-    case '/api/profile':
-        require_once 'controllers/AuthController.php';
-        (new AuthController())->profile();
-        break;
-
+    // ========== ROUTE 404 ==========
     default:
+        // Vérifier si c'est une demande de téléchargement de CV
+        if (preg_match('/^\/api\/applications\/cv\/(.+)$/', $uri, $matches)) {
+            require_once 'controllers/ApplicationController.php';
+            if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                (new ApplicationController())->downloadCV($matches[1]);
+            } else {
+                http_response_code(405);
+                echo json_encode(['error' => 'Méthode non autorisée']);
+            }
+            break;
+        }
+
         http_response_code(404);
-        echo json_encode(['error' => 'Route inconnue']);
+        echo json_encode(['error' => 'Route inconnue : ' . $uri]);
         break;
 }
+?>

@@ -7,6 +7,7 @@ import Offres from './Views/Offres';
 import OffresPost from './Views/OffresPost';
 import OffresGestion from './Views/OffresGestion';
 import UserProfile from './Views/UserProfile';
+import Candidatures from './Views/Candidatures';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/OffresPost" element={<OffresPost />} />
         <Route path="/OffresGestion" element={<OffresGestion />} />
         <Route path="/UserProfile" element={<UserProfile />} />
+        <Route path="/Candidatures" element={<Candidatures />} />
       </Routes>
     </Router>
   );

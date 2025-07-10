@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getOffres } from '../api';
+import { getOffres, applyToJobWithCV } from '../api';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -13,6 +13,14 @@ const Offres = () => {
   });
   const [erreur, setErreur] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [applicationForm, setApplicationForm] = useState({
+    coverLetter: '',
+    cvType: 'generated'
+  });
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [applicationError, setApplicationError] = useState('');
   const navigate = useNavigate();
 
   // 🔐 Décoder le token JWT pour obtenir le rôle et user_id
@@ -84,6 +92,66 @@ const Offres = () => {
     setFiltres({ ...filtres, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Vérifier le type de fichier
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.type)) {
+        setApplicationError('Seuls les fichiers PDF et Word sont acceptés');
+        return;
+      }
+      
+      // Vérifier la taille (5MB max)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        setApplicationError('Le fichier ne peut pas dépasser 5MB');
+        return;
+      }
+      
+      setSelectedFile(file);
+      setApplicationError('');
+    }
+  };
+
+  const handleApply = async (job) => {
+    setIsSubmitting(true);
+    setApplicationError('');
+    
+    // Validation
+    if (applicationForm.cvType === 'upload' && !selectedFile) {
+      setApplicationError('Veuillez sélectionner un fichier CV');
+      setIsSubmitting(false);
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const applicationData = {
+        job_id: job.id,
+        cover_letter: applicationForm.coverLetter,
+        cv_type: applicationForm.cvType
+      };
+
+      const response = await applyToJobWithCV(applicationData, selectedFile, token);
+      
+      if (response.data.success) {
+        // Fermer le modal et réinitialiser le formulaire
+        setSelectedJob(null);
+        setApplicationForm({ coverLetter: '', cvType: 'generated' });
+        setSelectedFile(null);
+        
+        // Afficher un message de succès
+        alert('Candidature envoyée avec succès !');
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi de la candidature:', error);
+      setApplicationError(error.response?.data?.error || 'Erreur lors de l\'envoi de la candidature');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const user = getUserFromToken();
 
   return (
@@ -97,10 +165,7 @@ const Offres = () => {
           <div className="d-flex align-items-center gap-4">
             <a href="/offres" className="nav-link text-white fw-semibold">Offres</a>
             <a href="#" className="nav-link text-white fw-semibold">Favoris</a>
-            <a href="#" className="nav-link text-white fw-semibold">Paramètres</a>
-            <span className="navbar-text text-white-50 me-3">
-              Espace Candidat
-            </span>
+            <a className="nav-link text-white fw-semibold" href="/Candidatures">Candidatures</a>
             
             {/* Menu déroulant profil */}
             <div className="dropdown">
@@ -111,7 +176,7 @@ const Offres = () => {
                 aria-expanded="false"
               >
                 <i className="bi bi-person-circle me-2"></i>
-                Mon Compte
+                {user?.email || 'Mon Compte'}
               </button>
               <ul className="dropdown-menu dropdown-menu-end">
                 <li>
@@ -121,16 +186,7 @@ const Offres = () => {
                   </a>
                 </li>
                 <li>
-                  <a className="dropdown-item" href="#">
-                    <i className="bi bi-heart me-2"></i>
-                    Mes Favoris
-                  </a>
-                </li>
-                <li>
-                  <a className="dropdown-item" href="#">
-                    <i className="bi bi-file-earmark-text me-2"></i>
-                    Mes Candidatures
-                  </a>
+                  
                 </li>
                 <li><hr className="dropdown-divider" /></li>
                 <li>
@@ -346,7 +402,7 @@ const Offres = () => {
                     {/* Salaire si disponible */}
                     {offre.salaire && (
                       <div className="d-flex align-items-center mb-3">
-                        <i className="bi bi-currency-euro text-success me-2"></i>
+                        <i className="bi bi-currency-dollar text-success me-2"></i>
                         <span className="fw-bold text-success">
                           {offre.salaire}
                         </span>
@@ -367,17 +423,25 @@ const Offres = () => {
                   {/* Footer avec boutons */}
                   <div className="card-footer bg-transparent border-0 p-4 pt-0">
                     <div className="d-grid gap-2">
-                      <button className="btn btn-primary fw-semibold" style={{ 
-                        borderRadius: '10px',
-                        padding: '12px'
-                      }}>
+                      <button 
+                        className="btn btn-primary fw-semibold" 
+                        style={{ 
+                          borderRadius: '10px',
+                          padding: '12px'
+                        }}
+                        onClick={() => alert('Fonctionnalité "Voir l\'offre" à implémenter')}
+                      >
                         <i className="bi bi-eye me-2"></i>
                         Voir l'offre
                       </button>
-                      <button className="btn btn-outline-success fw-semibold" style={{ 
-                        borderRadius: '10px',
-                        padding: '12px'
-                      }}>
+                      <button 
+                        className="btn btn-outline-success fw-semibold" 
+                        style={{ 
+                          borderRadius: '10px',
+                          padding: '12px'
+                        }}
+                        onClick={() => setSelectedJob(offre)}
+                      >
                         <i className="bi bi-send me-2"></i>
                         Postuler maintenant
                       </button>
@@ -401,6 +465,177 @@ const Offres = () => {
           </div>
         )}
       </div>
+
+      {/* Modal de candidature Bootstrap */}
+      {selectedJob && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-content" style={{ borderRadius: '15px' }}>
+              <div className="modal-header bg-primary text-white" style={{ borderRadius: '15px 15px 0 0' }}>
+                <h5 className="modal-title">
+                  <i className="bi bi-send me-2"></i>
+                  Postuler pour {selectedJob.titre}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => {
+                    setSelectedJob(null);
+                    setSelectedFile(null);
+                    setApplicationError('');
+                  }}
+                ></button>
+              </div>
+              
+              <div className="modal-body p-4">
+                {/* Informations sur l'offre */}
+                <div className="alert alert-info mb-4">
+                  <h6 className="alert-heading">{selectedJob.titre}</h6>
+                  <p className="mb-1">
+                    <i className="bi bi-building me-2"></i>
+                    {selectedJob.entreprise || 'Entreprise inconnue'} • 
+                    <i className="bi bi-geo-alt me-2 ms-2"></i>
+                    {selectedJob.lieu}
+                  </p>
+                  <p className="mb-1">
+                    <i className="bi bi-briefcase me-2"></i>
+                    {selectedJob.type} • 
+                    <i className="bi bi-currency-dollar me-2 ms-2"></i>
+                    {selectedJob.salaire || 'Non spécifié'}
+                  </p>
+                  <small>{selectedJob.description || 'Description non disponible'}</small>
+                </div>
+
+                {/* Choix du CV */}
+                <div className="mb-4">
+                  <label className="form-label fw-semibold">Choisissez votre CV</label>
+                  <div className="row g-3">
+                    <div className="col-6">
+                      <div 
+                        onClick={() => {
+                          setApplicationForm({...applicationForm, cvType: 'generated'});
+                          setSelectedFile(null);
+                        }}
+                        className={`card h-100 border-2 ${applicationForm.cvType === 'generated' ? 'border-primary bg-primary bg-opacity-10' : 'border-secondary'}`}
+                        style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+                      >
+                        <div className="card-body text-center p-3">
+                          <i className={`bi bi-robot fs-1 mb-2 ${applicationForm.cvType === 'generated' ? 'text-primary' : 'text-muted'}`}></i>
+                          <h6 className={`mb-1 ${applicationForm.cvType === 'generated' ? 'text-primary' : 'text-muted'}`}>
+                            CV généré par IA
+                          </h6>
+                          <small className="text-muted">Utiliser votre CV NextStep</small>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-6">
+                      <div 
+                        onClick={() => setApplicationForm({...applicationForm, cvType: 'upload'})}
+                        className={`card h-100 border-2 ${applicationForm.cvType === 'upload' ? 'border-primary bg-primary bg-opacity-10' : 'border-secondary'}`}
+                        style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+                      >
+                        <div className="card-body text-center p-3">
+                          <i className={`bi bi-cloud-upload fs-1 mb-2 ${applicationForm.cvType === 'upload' ? 'text-primary' : 'text-muted'}`}></i>
+                          <h6 className={`mb-1 ${applicationForm.cvType === 'upload' ? 'text-primary' : 'text-muted'}`}>
+                            Télécharger un CV
+                          </h6>
+                          <small className="text-muted">Utiliser un fichier externe</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Upload de fichier si CV upload sélectionné */}
+                {applicationForm.cvType === 'upload' && (
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold">
+                      Fichier CV <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="file"
+                      className="form-control"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleFileChange}
+                      style={{ borderRadius: '8px' }}
+                    />
+                    <div className="form-text">
+                      <i className="bi bi-info-circle me-1"></i>
+                      Formats acceptés : PDF, DOC, DOCX (max 5MB)
+                    </div>
+                    {selectedFile && (
+                      <div className="mt-2 p-2 bg-light rounded">
+                        <small className="text-success">
+                          <i className="bi bi-check-circle me-1"></i>
+                          Fichier sélectionné : {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                        </small>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Lettre de motivation */}
+                <div className="mb-4">
+                  <label className="form-label fw-semibold">Lettre de motivation (optionnelle)</label>
+                  <textarea
+                    value={applicationForm.coverLetter}
+                    onChange={(e) => setApplicationForm({...applicationForm, coverLetter: e.target.value})}
+                    rows={6}
+                    className="form-control"
+                    placeholder="Expliquez pourquoi vous êtes le candidat idéal pour ce poste..."
+                    style={{ borderRadius: '8px' }}
+                  />
+                  <div className="form-text">
+                    <i className="bi bi-lightbulb me-1"></i>
+                    Conseil : Personnalisez votre lettre en fonction de l'offre et de l'entreprise
+                  </div>
+                </div>
+
+                {applicationError && (
+                  <div className="alert alert-danger">
+                    <i className="bi bi-exclamation-triangle me-2"></i>
+                    {applicationError}
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setSelectedJob(null);
+                    setSelectedFile(null);
+                    setApplicationError('');
+                  }}
+                  disabled={isSubmitting}
+                >
+                  <i className="bi bi-x-lg me-1"></i>
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleApply(selectedJob)}
+                  disabled={isSubmitting || (applicationForm.cvType === 'upload' && !selectedFile)}
+                  className="btn btn-primary"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                      Envoi en cours...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-send me-1"></i>
+                      Envoyer ma candidature
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .card:hover {
@@ -473,6 +708,15 @@ const Offres = () => {
 
         .dropdown-toggle::after {
           margin-left: 8px;
+        }
+        
+        .modal.show {
+          animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         
         @media (max-width: 768px) {

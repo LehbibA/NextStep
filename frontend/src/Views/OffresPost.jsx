@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createOffre } from '../api'; // Import de la fonction API
 
 const JobPostingForm = () => {
   const navigate = useNavigate();
@@ -34,11 +35,14 @@ const JobPostingForm = () => {
     salary: '',
     description: '',
     requirements: '',
-    benefits: ''
+    benefits: '',
+    sector: ''
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiSuccess, setAiSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({
@@ -81,7 +85,8 @@ Soft skills :
 • Communication claire et efficace`,
 
         benefits: `• Télétravail hybride (2-3 jours/semaine)
-• Tickets restaurant et mutuelle premium
+• Assurance médicale et dentaire complète
+• REER avec contribution de l'employeur
 • Budget formation et conférences
 • Équipement informatique de qualité
 • Ambiance startup dynamique
@@ -97,12 +102,53 @@ Soft skills :
     }, 2000);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Données du formulaire:', formData);
-    alert('Offre publiée avec succès !');
-    // Rediriger vers la gestion des offres après publication
-    navigate('/OffresGestion');
+    setError('');
+    setIsSubmitting(true);
+
+    // Validation des champs obligatoires
+    if (!formData.jobTitle || !formData.company || !formData.location || !formData.jobType || !formData.description) {
+      setError('Veuillez remplir tous les champs obligatoires');
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Préparer les données pour l'API backend
+      const offreData = {
+        titre: formData.jobTitle,
+        entreprise: formData.company,
+        description: formData.description,
+        lieu: formData.location,
+        ville: formData.location, // Pour compatibilité
+        type: formData.jobType,
+        salaire: formData.salary || 'Non spécifié',
+        secteur: formData.sector || 'Non spécifié',
+        experience: formData.experience || 'Non spécifiée',
+        competences: formData.requirements || '',
+        avantages: formData.benefits || ''
+      };
+
+      console.log('Envoi des données:', offreData);
+
+      const response = await createOffre(offreData, token);
+      
+      if (response.data.success) {
+        alert('Offre créée avec succès !');
+        // Rediriger vers la gestion des offres après publication
+        navigate('/OffresGestion');
+      } else {
+        setError(response.data.error || 'Erreur lors de la création de l\'offre');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la création de l\'offre:', error);
+      setError(error.response?.data?.error || 'Erreur lors de la création de l\'offre');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleBackToManagement = () => {
@@ -201,44 +247,28 @@ Soft skills :
                 {/* Body */}
                 <div className="card-body p-4 p-md-5">
                   
-                  {/* Titre du poste */}
-                  <div className="mb-4">
-                    <label className="form-label fw-semibold">
-                      Titre du poste <span className="text-danger">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control form-control-lg"
-                      name="jobTitle"
-                      value={formData.jobTitle}
-                      onChange={handleChange}
-                      placeholder="Ex: Développeur Full-stack Senior"
-                      style={{
-                        borderRadius: '12px',
-                        border: '2px solid #e5e7eb',
-                        transition: 'all 0.3s ease',
-                        fontSize: '16px',
-                        padding: '16px'
-                      }}
-                    />
-                    <div className="form-text">
-                      Soyez précis et attractif pour attirer les meilleurs talents
+                  {/* Message d'erreur */}
+                  {error && (
+                    <div className="alert alert-danger mb-4">
+                      <i className="bi bi-exclamation-triangle me-2"></i>
+                      {error}
                     </div>
-                  </div>
+                  )}
 
-                  {/* Entreprise et Localisation */}
-                  <div className="row mb-4">
-                    <div className="col-md-6 mb-3 mb-md-0">
+                  <form onSubmit={handleSubmit}>
+                    {/* Titre du poste */}
+                    <div className="mb-4">
                       <label className="form-label fw-semibold">
-                        Entreprise <span className="text-danger">*</span>
+                        Titre du poste <span className="text-danger">*</span>
                       </label>
                       <input
                         type="text"
                         className="form-control form-control-lg"
-                        name="company"
-                        value={formData.company}
+                        name="jobTitle"
+                        value={formData.jobTitle}
                         onChange={handleChange}
-                        placeholder="Nom de votre entreprise"
+                        placeholder="Ex: Développeur Full-stack Senior"
+                        required
                         style={{
                           borderRadius: '12px',
                           border: '2px solid #e5e7eb',
@@ -247,266 +277,336 @@ Soft skills :
                           padding: '16px'
                         }}
                       />
+                      <div className="form-text">
+                        Soyez précis et attractif pour attirer les meilleurs talents
+                      </div>
                     </div>
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">
-                        Localisation <span className="text-danger">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control form-control-lg"
-                        name="location"
-                        value={formData.location}
-                        onChange={handleChange}
-                        placeholder="Paris, Lyon, Remote..."
-                        style={{
-                          borderRadius: '12px',
-                          border: '2px solid #e5e7eb',
-                          transition: 'all 0.3s ease',
-                          fontSize: '16px',
-                          padding: '16px'
-                        }}
-                      />
-                    </div>
-                  </div>
 
-                  {/* Type de contrat et Expérience */}
-                  <div className="row mb-4">
-                    <div className="col-md-6 mb-3 mb-md-0">
-                      <label className="form-label fw-semibold">
-                        Type de contrat <span className="text-danger">*</span>
-                      </label>
-                      <select
-                        className="form-select form-select-lg"
-                        name="jobType"
-                        value={formData.jobType}
-                        onChange={handleChange}
-                        style={{
-                          borderRadius: '12px',
-                          border: '2px solid #e5e7eb',
-                          transition: 'all 0.3s ease',
-                          fontSize: '16px',
-                          padding: '16px'
-                        }}
-                      >
-                        <option value="">Choisir...</option>
-                        <option value="CDI">CDI</option>
-                        <option value="CDD">CDD</option>
-                        <option value="Stage">Stage</option>
-                        <option value="Freelance">Freelance</option>
-                        <option value="Apprentissage">Apprentissage</option>
-                      </select>
+                    {/* Entreprise et Localisation */}
+                    <div className="row mb-4">
+                      <div className="col-md-6 mb-3 mb-md-0">
+                        <label className="form-label fw-semibold">
+                          Entreprise <span className="text-danger">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control form-control-lg"
+                          name="company"
+                          value={formData.company}
+                          onChange={handleChange}
+                          placeholder="Nom de votre entreprise"
+                          required
+                          style={{
+                            borderRadius: '12px',
+                            border: '2px solid #e5e7eb',
+                            transition: 'all 0.3s ease',
+                            fontSize: '16px',
+                            padding: '16px'
+                          }}
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          Localisation <span className="text-danger">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control form-control-lg"
+                          name="location"
+                          value={formData.location}
+                          onChange={handleChange}
+                          placeholder="Montréal, Toronto, Vancouver, Télétravail..."
+                          required
+                          style={{
+                            borderRadius: '12px',
+                            border: '2px solid #e5e7eb',
+                            transition: 'all 0.3s ease',
+                            fontSize: '16px',
+                            padding: '16px'
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">
-                        Niveau d'expérience <span className="text-danger">*</span>
-                      </label>
-                      <select
-                        className="form-select form-select-lg"
-                        name="experience"
-                        value={formData.experience}
-                        onChange={handleChange}
-                        style={{
-                          borderRadius: '12px',
-                          border: '2px solid #e5e7eb',
-                          transition: 'all 0.3s ease',
-                          fontSize: '16px',
-                          padding: '16px'
-                        }}
-                      >
-                        <option value="">Choisir...</option>
-                        <option value="Junior (0-2 ans)">Junior (0-2 ans)</option>
-                        <option value="Confirmé (3-5 ans)">Confirmé (3-5 ans)</option>
-                        <option value="Senior (5+ ans)">Senior (5+ ans)</option>
-                        <option value="Lead/Manager">Lead/Manager</option>
-                      </select>
-                    </div>
-                  </div>
 
-                  {/* Salaire */}
-                  <div className="mb-4">
-                    <label className="form-label fw-semibold">
-                      Fourchette salariale
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control form-control-lg"
-                      name="salary"
-                      value={formData.salary}
-                      onChange={handleChange}
-                      placeholder="Ex: 45-55k€ ou À négocier"
-                      style={{
-                        borderRadius: '12px',
-                        border: '2px solid #e5e7eb',
-                        transition: 'all 0.3s ease',
-                        fontSize: '16px',
-                        padding: '16px'
-                      }}
-                    />
-                    <div className="form-text">
-                      Optionnel - Les offres avec salaire reçoivent 3x plus de candidatures
+                    {/* Type de contrat et Expérience */}
+                    <div className="row mb-4">
+                      <div className="col-md-6 mb-3 mb-md-0">
+                        <label className="form-label fw-semibold">
+                          Type de contrat <span className="text-danger">*</span>
+                        </label>
+                        <select
+                          className="form-select form-select-lg"
+                          name="jobType"
+                          value={formData.jobType}
+                          onChange={handleChange}
+                          required
+                          style={{
+                            borderRadius: '12px',
+                            border: '2px solid #e5e7eb',
+                            transition: 'all 0.3s ease',
+                            fontSize: '16px',
+                            padding: '16px'
+                          }}
+                        >
+                          <option value="">Choisir...</option>
+                          <option value="Permanent">Permanent</option>
+                          <option value="Contrat">Contrat</option>
+                          <option value="Stage">Stage</option>
+                          <option value="Freelance">Freelance</option>
+                          <option value="Apprentissage">Apprentissage</option>
+                        </select>
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          Niveau d'expérience
+                        </label>
+                        <select
+                          className="form-select form-select-lg"
+                          name="experience"
+                          value={formData.experience}
+                          onChange={handleChange}
+                          style={{
+                            borderRadius: '12px',
+                            border: '2px solid #e5e7eb',
+                            transition: 'all 0.3s ease',
+                            fontSize: '16px',
+                            padding: '16px'
+                          }}
+                        >
+                          <option value="">Choisir...</option>
+                          <option value="Junior (0-2 ans)">Junior (0-2 ans)</option>
+                          <option value="Intermédiaire (3-5 ans)">Intermédiaire (3-5 ans)</option>
+                          <option value="Senior (5+ ans)">Senior (5+ ans)</option>
+                          <option value="Lead/Manager">Lead/Manager</option>
+                        </select>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Section IA */}
-                  <div className="mb-4 p-4 text-center" style={{
-                    background: 'linear-gradient(135deg, #f8faff 0%, #e6f0ff 100%)',
-                    border: '2px dashed #3366ff',
-                    borderRadius: '16px',
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{
-                      fontSize: '24px',
-                      marginBottom: '10px',
-                      animation: 'pulse 2s infinite'
+                    {/* Salaire et Secteur */}
+                    <div className="row mb-4">
+                      <div className="col-md-6 mb-3 mb-md-0">
+                        <label className="form-label fw-semibold">
+                          Fourchette salariale
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control form-control-lg"
+                          name="salary"
+                          value={formData.salary}
+                          onChange={handleChange}
+                          placeholder="Ex: 65 000-75 000$ CAD ou À négocier"
+                          style={{
+                            borderRadius: '12px',
+                            border: '2px solid #e5e7eb',
+                            transition: 'all 0.3s ease',
+                            fontSize: '16px',
+                            padding: '16px'
+                          }}
+                        />
+                        <div className="form-text">
+                          Les offres avec salaire reçoivent 3x plus de candidatures
+                        </div>
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label fw-semibold">
+                          Secteur d'activité
+                        </label>
+                        <select
+                          className="form-select form-select-lg"
+                          name="sector"
+                          value={formData.sector}
+                          onChange={handleChange}
+                          style={{
+                            borderRadius: '12px',
+                            border: '2px solid #e5e7eb',
+                            transition: 'all 0.3s ease',
+                            fontSize: '16px',
+                            padding: '16px'
+                          }}
+                        >
+                          <option value="">Choisir...</option>
+                          <option value="Technologie">Technologie</option>
+                          <option value="Marketing">Marketing</option>
+                          <option value="Finance">Finance</option>
+                          <option value="Ressources Humaines">Ressources Humaines</option>
+                          <option value="Ventes">Ventes</option>
+                          <option value="Design">Design</option>
+                          <option value="Autre">Autre</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Section IA */}
+                    <div className="mb-4 p-4 text-center" style={{
+                      background: 'linear-gradient(135deg, #f8faff 0%, #e6f0ff 100%)',
+                      border: '2px dashed #3366ff',
+                      borderRadius: '16px',
+                      position: 'relative',
+                      overflow: 'hidden'
                     }}>
-                      🤖
+                      <div style={{
+                        fontSize: '24px',
+                        marginBottom: '10px',
+                        animation: 'pulse 2s infinite'
+                      }}>
+                        🤖
+                      </div>
+                      <h5 className="fw-bold mb-2" style={{color: '#3366ff'}}>
+                        ✨ Assistance IA avancée
+                      </h5>
+                      <p className="text-muted mb-3">
+                        Laissez notre IA vous aider à rédiger une description d'offre optimisée qui attire les meilleurs talents
+                      </p>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={generateWithAI}
+                        disabled={isGenerating}
+                        style={{
+                          background: aiSuccess 
+                            ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                            : 'linear-gradient(135deg, #3366ff 0%, #1e4fff 100%)',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontWeight: '600',
+                          transition: 'all 0.3s ease',
+                          padding: '12px 24px'
+                        }}
+                      >
+                        {isGenerating ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                            Génération en cours...
+                          </>
+                        ) : aiSuccess ? (
+                          '✓ Généré avec succès !'
+                        ) : (
+                          'Générer avec l\'IA'
+                        )}
+                      </button>
                     </div>
-                    <h5 className="fw-bold mb-2" style={{color: '#3366ff'}}>
-                      ✨ Assistance IA avancée
-                    </h5>
-                    <p className="text-muted mb-3">
-                      Laissez notre IA vous aider à rédiger une description d'offre optimisée qui attire les meilleurs talents
-                    </p>
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={generateWithAI}
-                      disabled={isGenerating}
-                      style={{
-                        background: aiSuccess 
-                          ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                          : 'linear-gradient(135deg, #3366ff 0%, #1e4fff 100%)',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontWeight: '600',
-                        transition: 'all 0.3s ease',
-                        padding: '12px 24px'
-                      }}
-                    >
-                      {isGenerating ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                          Génération en cours...
-                        </>
-                      ) : aiSuccess ? (
-                        '✓ Généré avec succès !'
-                      ) : (
-                        'Générer avec l\'IA'
-                      )}
-                    </button>
-                  </div>
 
-                  {/* Description */}
-                  <div className="mb-4">
-                    <label className="form-label fw-semibold">
-                      Description du poste <span className="text-danger">*</span>
-                    </label>
-                    <textarea
-                      className="form-control"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleChange}
-                      rows="6"
-                      placeholder="Décrivez le poste, les missions, les responsabilités..."
-                      style={{
-                        borderRadius: '12px',
-                        border: '2px solid #e5e7eb',
-                        transition: 'all 0.3s ease',
-                        resize: 'vertical',
-                        fontSize: '16px',
-                        padding: '16px'
-                      }}
-                    ></textarea>
-                    <div className="form-text">
-                      Plus la description est détaillée, plus vous attirerez des candidats qualifiés
+                    {/* Description */}
+                    <div className="mb-4">
+                      <label className="form-label fw-semibold">
+                        Description du poste <span className="text-danger">*</span>
+                      </label>
+                      <textarea
+                        className="form-control"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        rows="6"
+                        placeholder="Décrivez le poste, les missions, les responsabilités..."
+                        required
+                        style={{
+                          borderRadius: '12px',
+                          border: '2px solid #e5e7eb',
+                          transition: 'all 0.3s ease',
+                          resize: 'vertical',
+                          fontSize: '16px',
+                          padding: '16px'
+                        }}
+                      ></textarea>
+                      <div className="form-text">
+                        Plus la description est détaillée, plus vous attirerez des candidats qualifiés
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Compétences */}
-                  <div className="mb-4">
-                    <label className="form-label fw-semibold">
-                      Compétences requises <span className="text-danger">*</span>
-                    </label>
-                    <textarea
-                      className="form-control"
-                      name="requirements"
-                      value={formData.requirements}
-                      onChange={handleChange}
-                      rows="6"
-                      placeholder="Listez les compétences techniques et soft skills nécessaires..."
-                      style={{
-                        borderRadius: '12px',
-                        border: '2px solid #e5e7eb',
-                        transition: 'all 0.3s ease',
-                        resize: 'vertical',
-                        fontSize: '16px',
-                        padding: '16px'
-                      }}
-                    ></textarea>
-                  </div>
-
-                  {/* Avantages */}
-                  <div className="mb-4">
-                    <label className="form-label fw-semibold">
-                      Avantages
-                    </label>
-                    <textarea
-                      className="form-control"
-                      name="benefits"
-                      value={formData.benefits}
-                      onChange={handleChange}
-                      rows="4"
-                      placeholder="Télétravail, tickets restaurant, mutuelle, formation..."
-                      style={{
-                        borderRadius: '12px',
-                        border: '2px solid #e5e7eb',
-                        transition: 'all 0.3s ease',
-                        resize: 'vertical',
-                        fontSize: '16px',
-                        padding: '16px'
-                      }}
-                    ></textarea>
-                    <div className="form-text">
-                      Les avantages aident à vous démarquer de la concurrence
+                    {/* Compétences */}
+                    <div className="mb-4">
+                      <label className="form-label fw-semibold">
+                        Compétences requises
+                      </label>
+                      <textarea
+                        className="form-control"
+                        name="requirements"
+                        value={formData.requirements}
+                        onChange={handleChange}
+                        rows="6"
+                        placeholder="Listez les compétences techniques et soft skills nécessaires..."
+                        style={{
+                          borderRadius: '12px',
+                          border: '2px solid #e5e7eb',
+                          transition: 'all 0.3s ease',
+                          resize: 'vertical',
+                          fontSize: '16px',
+                          padding: '16px'
+                        }}
+                      ></textarea>
                     </div>
-                  </div>
 
-                  {/* Actions */}
-                  <div className="d-flex gap-3 justify-content-end pt-4 border-top flex-column flex-md-row">
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary btn-lg mb-2 mb-md-0"
-                      onClick={handleBackToManagement}
-                      style={{
-                        borderRadius: '12px',
-                        fontWeight: '600',
-                        minWidth: '160px',
-                        padding: '16px 32px'
-                      }}
-                    >
-                      <i className="bi bi-arrow-left me-2"></i>
-                      Retour
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn btn-primary btn-lg"
-                      onClick={handleSubmit}
-                      style={{
-                        background: 'linear-gradient(135deg, #3366ff 0%, #1e4fff 100%)',
-                        border: 'none',
-                        borderRadius: '12px',
-                        fontWeight: '600',
-                        minWidth: '160px',
-                        boxShadow: '0 4px 15px rgba(51, 102, 255, 0.2)',
-                        padding: '16px 32px'
-                      }}
-                    >
-                      <i className="bi bi-check-lg me-2"></i>
-                      Publier l'offre
-                    </button>
-                  </div>
+                    {/* Avantages */}
+                    <div className="mb-4">
+                      <label className="form-label fw-semibold">
+                        Avantages
+                      </label>
+                      <textarea
+                        className="form-control"
+                        name="benefits"
+                        value={formData.benefits}
+                        onChange={handleChange}
+                        rows="4"
+                        placeholder="Télétravail hybride, Assurance médicale/dentaire, REER avec contribution de l'employeur, Congés flexibles..."
+                        style={{
+                          borderRadius: '12px',
+                          border: '2px solid #e5e7eb',
+                          transition: 'all 0.3s ease',
+                          resize: 'vertical',
+                          fontSize: '16px',
+                          padding: '16px'
+                        }}
+                      ></textarea>
+                      <div className="form-text">
+                        Les avantages aident à vous démarquer de la concurrence
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="d-flex gap-3 justify-content-end pt-4 border-top flex-column flex-md-row">
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary btn-lg mb-2 mb-md-0"
+                        onClick={handleBackToManagement}
+                        disabled={isSubmitting}
+                        style={{
+                          borderRadius: '12px',
+                          fontWeight: '600',
+                          minWidth: '160px',
+                          padding: '16px 32px'
+                        }}
+                      >
+                        <i className="bi bi-arrow-left me-2"></i>
+                        Retour
+                      </button>
+                      <button
+                        type="submit"
+                        className="btn btn-primary btn-lg"
+                        disabled={isSubmitting}
+                        style={{
+                          background: 'linear-gradient(135deg, #3366ff 0%, #1e4fff 100%)',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontWeight: '600',
+                          minWidth: '160px',
+                          boxShadow: '0 4px 15px rgba(51, 102, 255, 0.2)',
+                          padding: '16px 32px'
+                        }}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                            Création en cours...
+                          </>
+                        ) : (
+                          <>
+                            <i className="bi bi-check-lg me-2"></i>
+                            Publier l'offre
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
             </div>
@@ -543,20 +643,20 @@ Soft skills :
             outline: none !important;
           }
 
-          .btn:hover {
+          .btn:hover:not(:disabled) {
             transform: translateY(-2px);
           }
 
-          .btn-primary:hover {
+          .btn-primary:hover:not(:disabled) {
             box-shadow: 0 8px 25px rgba(51, 102, 255, 0.3) !important;
           }
 
-          .btn-outline-secondary:hover {
+          .btn-outline-secondary:hover:not(:disabled) {
             background: #e5e7eb !important;
             transform: translateY(-2px);
           }
 
-          .btn-outline-light:hover {
+          .btn-outline-light:hover:not(:disabled) {
             background: rgba(255,255,255,0.1) !important;
             transform: translateY(-1px);
           }

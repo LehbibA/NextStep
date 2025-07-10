@@ -1,0 +1,62 @@
+[
+    {
+        "id": "6870290f7eeaa",
+        "user_id": "6864c8492ffd9",
+        "job_id": "6870219d4fdf7",
+        "cover_letter": "",
+        "cv_type": "upload",
+        "cv_path": "cv_6864c8492ffd9_6870219d4fdf7_1752181007.pdf",
+        "status": "accepted",
+        "feedback": "",
+        "applied_at": "2025-07-10 20:56:47",
+        "updated_at": "2025-07-10 22:50:00"
+    },
+    {
+        "id": "68703d0f584fd",
+        "user_id": "6864c8492ffd9",
+        "job_id": "68703c45cd6a6",
+        "cover_letter": "",
+        "cv_type": "upload",
+        "cv_path": "cv_6864c8492ffd9_68703c45cd6a6_1752186127.pdf",
+        "status": "pending",
+        "feedback": "",
+        "applied_at": "2025-07-10 22:22:07",
+        "updated_at": "2025-07-10 22:22:07"
+    },
+    {
+        "id": "6870440841307",
+        "user_id": "687043ec20de3",
+        "job_id": "6870219d4fdf7",
+        "cover_letter": "",
+        "cv_type": "upload",
+        "cv_path": "cv_687043ec20de3_6870219d4fdf7_1752187912.pdf",
+        "status": "rejected",
+        "feedback": "",
+        "applied_at": "2025-07-10 22:51:52",
+        "updated_at": "2025-07-10 23:13:11"
+    },
+    {
+        "id": "68704841a5585",
+        "user_id": "6870482d6821c",
+        "job_id": "6870219d4fdf7",
+        "cover_letter": "",
+        "cv_type": "upload",
+        "cv_path": "cv_6870482d6821c_6870219d4fdf7_1752188993.pdf",
+        "status": "pending",
+        "feedback": "",
+        "applied_at": "2025-07-10 23:09:53",
+        "updated_at": "2025-07-10 23:09:53"
+    },
+    {
+        "id": "687049fba3a95",
+        "user_id": "6864c8492ffd9",
+        "job_id": "687049c7ac9ec",
+        "cover_letter": "",
+        "cv_type": "upload",
+        "cv_path": "cv_6864c8492ffd9_687049c7ac9ec_1752189435.pdf",
+        "status": "rejected",
+        "feedback": "",
+        "applied_at": "2025-07-10 23:17:15",
+        "updated_at": "2025-07-10 23:17:33"
+    }
+]
